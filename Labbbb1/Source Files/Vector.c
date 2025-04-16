@@ -56,13 +56,6 @@ void Delete(Vector* vector, unsigned int i)
 
 void FreeVector(Vector* vector)
 {
-	if (!vector)
-		return;
-	for (unsigned int i = 0; i < vector->dim_count; i++)
-	{
-		free(vector->data[i].data);
-	}
-	free(vector->data);
 	free(vector);
 }
 
@@ -70,43 +63,43 @@ void* VectorSum(Vector* vector1, Vector* vector2)
 {
 	int i1 = vector1->dim_count;
 	int i2 = vector2->dim_count;
-	Vector* answer = malloc(sizeof(Vector));
-	void* ans;
+	Vector* answer = Create();
+	Vector_element* ans;
 	data_type type;
 	for (int i = 0; i < min(i1, i2); i++)
 	{
 		ans = ElementSum(Get(vector1, i), Get(vector2, i), &type);
-		Add(answer, ans, type);
+		Add(answer, ans->data, type);
 	}
 	for (int i = min(i1, i2); i < max(i1, i2); i++)
 	{
 		if (max(i1, i2) == i1)
 		{
 			ans = Element(Get(vector1, i), &type);
-			Add(answer, ans, type);
+			Add(answer, ans->data, type);
 		}
 		else
 		{
 			ans = Element(Get(vector2, i), &type);
-			Add(answer, ans, type);
+			Add(answer, ans->data, type);
 		}
 	}
 	return answer;
 }
 
-void* VectorScalarMult(Vector* vector1, Vector* vector2)
+void* VectorScalarMult(Vector* vector1, Vector* vector2, data_type* ans_type)
 {
 	double d_ans = 0;
 	double c_ans = 0;
 	int i1 = vector1->dim_count;
 	int i2 = vector2->dim_count;
-	Vector_element* ans;
+	Vector_element* ans;   
 	data_type type;
 	complex* c = malloc(sizeof(complex));
-	double* d;
+	double* d = (double*)malloc(sizeof(double));
 	for (int i = 0; i < min(i1, i2); i++)
 	{
-		ans = ElementSum(Get(vector1, i), Get(vector2, i), &type);
+		ans = ElementMult(Get(vector1, i), Get(vector2, i), &type);
 		if (type == COMPLEX)
 		{
 			c = ans->data;
@@ -115,7 +108,7 @@ void* VectorScalarMult(Vector* vector1, Vector* vector2)
 		}
 		else if (type == DOUBLE || type == INT)
 		{
-			d = ans->data;
+			*d = *(double*)ans->data;
 			d_ans += *d;
 		}
 	}
@@ -154,15 +147,21 @@ void* VectorScalarMult(Vector* vector1, Vector* vector2)
 	}
 	if (c_ans == 0)
 	{
-		double* answer;
+		double* answer = (double*)malloc(sizeof(double));
+		if (answer == NULL)
+			return -1;
 		*answer = d_ans;
+		*ans_type = DOUBLE;
 		return answer;
 	}
 	else
 	{
 		complex* answer = malloc(sizeof(complex));
+		if (answer == NULL)
+			return -1;
 		answer->rp = d_ans;
 		answer->cp = c_ans;
+		*ans_type = COMPLEX;;
 		return answer;
 	}
 }

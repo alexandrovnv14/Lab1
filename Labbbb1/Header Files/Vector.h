@@ -19,6 +19,6 @@ Vector_element Get(Vector* vector, unsigned int i);
 void FreeVector(Vector* vector);
 void Delete(Vector* vector, unsigned int i);
 void* VectorSum(Vector* vector1, Vector* vector2);
-void* VectorScalarMult(Vector* vector1, Vector* vector2);
+void* VectorScalarMult(Vector* vector1, Vector* vector2, data_type* type);
 
 #endif

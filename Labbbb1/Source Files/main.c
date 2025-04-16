@@ -12,12 +12,12 @@ void save(Vector* vector, FILE* output)
 {
 	for (unsigned int i = 0; i < vector->dim_count; i++)
 	{
-		Vector_element element = vector->data[i];
+		Vector_element *element = &vector->data[i];
 		char* dim;
-		data_type type = element.type;
-		if (typeInfo[type] == typeInfo[INT]) dim = toString_Int(element.data);
-		else if (typeInfo[type] == typeInfo[DOUBLE]) dim = toString_Double(element.data);
-		else if (typeInfo[type] == typeInfo[COMPLEX]) dim = toString_Complex(element.data);
+		data_type type = element->type;
+		if (typeInfo[type] == typeInfo[INT]) dim = toString_Int(element->data);
+		else if (typeInfo[type] == typeInfo[DOUBLE]) dim = toString_Double(element->data);
+		else if (typeInfo[type] == typeInfo[COMPLEX]) dim = toString_Complex(element->data);
 		else
 		{
 			printf("ERROR: unknown type: %zu\n", typeInfo[type]);
@@ -62,6 +62,10 @@ int main()
 	FILE* output = fopen("output.txt", "w");
 	
 	Vector* vector = Create();
+	Vector* vector2 = Create();
+	Vector* vector3 = Create();
+	void* scalar_mult_ans = malloc(100);
+	data_type mult_type;
 
 	if (!input)
 	{
@@ -123,6 +127,8 @@ int main()
 			data_type type;
 			type_convert(input_type, &type);
 			Vector_element* v_e = malloc(sizeof(Vector_element));
+			if (v_e == NULL)
+				return -1;
 			*v_e = Get(vector, i);
 			void* data = v_e->data;
 			char* dim;
@@ -150,10 +156,48 @@ int main()
 		}
 		
 	}
+	///// инициализация доп вектора
+	fscanf(input, " %d\n", &dim_count);
+	for (int i = 0; i < dim_count; i++)
+	{
+		char type[50];
+		fscanf(input, " %[^,],", type);
+		data_type d_type;
+		void* data = type_scan(input, type, &d_type);
+		if (!data)
+		{
+			printf("ERROR: var type not declared");
+			return 1;
+		}
+		Add(vector2, data, d_type);
+	}
+	/////
 	save(vector, output);
+	fprintf(output, "------------------------------\n");
+	save(vector2, output);
+	fprintf(output,"------------------------------\n");
+	vector3 = VectorSum(vector, vector2);
+	save(vector, output);
+	fprintf(output, "------------------------------\n");
+	scalar_mult_ans = VectorScalarMult(vector, vector2, &mult_type);
+	if (mult_type == COMPLEX)
+	{
+		complex* n = (complex*)malloc(sizeof(complex));
+		n = (complex*)scalar_mult_ans;
+		printf("%f\n%f\n", n->rp, n->cp);
+	}
+	else if (mult_type == DOUBLE)
+	{
+		double* n = (double*)malloc(sizeof(double));
+		n = (double*)scalar_mult_ans;
+		printf("%f", n);
+	}
+	save(vector3, output);
 	fclose(input);
 	fclose(output);
 	FreeVector(vector);
+	FreeVector(vector2);
+	FreeVector(vector3);
 
 	return 0;
 }
